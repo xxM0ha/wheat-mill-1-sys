@@ -1,0 +1,100 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+
+{% block title %}تقرير المبيعات{% endblock %}
+
+{% block report_title %}تقرير المبيعات{% endblock %}
+
+{% block filters %}
+{% if buyer_name %}
+<div class="filter-item">
+    <span class="filter-label">المشتري:</span>
+    <span class="filter-value">{{ buyer_name }}</span>
+</div>
+{% endif %}
+{% if date_from %}
+<div class="filter-item">
+    <span class="filter-label">من تاريخ:</span>
+    <span class="filter-value">{{ date_from }}</span>
+</div>
+{% endif %}
+{% if date_to %}
+<div class="filter-item">
+    <span class="filter-label">إلى تاريخ:</span>
+    <span class="filter-value">{{ date_to }}</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Sales Details Table -->
+{% if sales %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon"></div>
+        <div class="section-title">سجل المبيعات التفصيلي</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة</th>
+                    {% if not buyer_name %}
+                    <th>المشتري</th>
+                    {% endif %}
+                    <th>الكمية</th>
+                    <th>نوع المادة</th>
+                    <th>السعر</th>
+                    <th>الإجمالي</th>
+                    <th>المدفوع</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td class="font-medium">{{ sale.invoice_number|default:"-" }}</td>
+                    {% if not buyer_name %}
+                    <td class="font-bold">{{ sale.buyer_name }}</td>
+                    {% endif %}
+                    <td>
+                        {% if sale.item_type == 'flour' %}
+                        {{ sale.quantity_kilos|divide:50|floatformat:0|mill_comma }} كيس
+                        {% else %}
+                        {{ sale.quantity_kilos|divide:1000|mill_comma }} طن
+                        {% endif %}
+                    </td>
+                    <td class="font-medium">
+                        {{ sale.get_item_type_display }}
+                    </td>
+                    <td>
+                        {% if sale.item_type == 'flour' %}
+                        {{ sale.total_amount|divide_float:sale.quantity_kilos|multiply:50|mill_intcomma }}
+                        {% else %}
+                        {{ sale.price_per_ton|mill_intcomma }}
+                        {% endif %}
+                    </td>
+                    <td class="font-bold text-primary">{{ sale.total_amount|mill_intcomma }}</td>
+                    <td class="text-success">{{ sale.amount_paid|mill_intcomma }}</td>
+                    <td>{{ sale.date|date:"Y/m/d" }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="table-footer">
+                    <td colspan="{% if buyer_name %}4{% else %}5{% endif %}" class="text-center">المجموع الكلي</td>
+                    <td>{{ summary.total_sales|mill_intcomma }}</td>
+                    <td>{{ summary.total_paid|mill_intcomma }}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"></div>
+    <p>لا توجد مبيعات مسجلة بناءً على معايير البحث المحددة</p>
+</div>
+{% endif %}
+
+{% endblock %}

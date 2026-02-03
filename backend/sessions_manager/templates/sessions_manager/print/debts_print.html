@@ -1,0 +1,142 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+
+{% block title %}تقرير الديون والمدفوعات{% endblock %}
+
+{% block report_title %}تقرير الديون والمدفوعات{% endblock %}
+
+{% block filter_bar %}
+<div class="filter-bar">
+    {% if person_name %}
+    <div class="filter-item">
+        <span class="filter-label">الشخص:</span>
+        <span class="filter-value">{{ person_name }}</span>
+    </div>
+    {% if person_stats %}
+    {% if person_stats.status == 'we_want' %}
+    <div class="filter-item">
+        <span class="filter-label">الحالة:</span>
+        <span class="filter-value text-error font-bold"
+            style="background: var(--error-50); padding: 6px 16px; border-radius: 8px; border: 2px solid var(--error-500); font-size: 16px;">
+            نطلبه
+        </span>
+    </div>
+    <div class="filter-item">
+        <span class="filter-label">المبلغ:</span>
+        <span class="filter-value text-error font-bold"
+            style="background: var(--error-50); padding: 6px 16px; border-radius: 8px; border: 2px solid var(--error-500);">
+            {{ person_stats.balance_we_want|mill_intcomma }} د.ع
+        </span>
+    </div>
+    {% elif person_stats.status == 'they_want' %}
+    <div class="filter-item">
+        <span class="filter-label">الحالة:</span>
+        <span class="filter-value text-warning font-bold"
+            style="background: var(--warning-50); padding: 6px 16px; border-radius: 8px; border: 2px solid var(--warning-500); font-size: 16px;">
+            يطلبنا
+        </span>
+    </div>
+    <div class="filter-item">
+        <span class="filter-label">المبلغ:</span>
+        <span class="filter-value text-warning font-bold"
+            style="background: var(--warning-50); padding: 6px 16px; border-radius: 8px; border: 2px solid var(--warning-500);">
+            {{ person_stats.balance_they_want|mill_intcomma }} د.ع
+        </span>
+    </div>
+    {% elif person_stats.status == 'settled' %}
+    <div class="filter-item">
+        <span class="filter-label">الحالة:</span>
+        <span class="filter-value text-success font-bold"
+            style="background: var(--success-50); padding: 6px 16px; border-radius: 8px; border: 2px solid var(--success-500); font-size: 16px;">
+            تم تصفير الحساب
+        </span>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+    {% if date_from %}
+    <div class="filter-item">
+        <span class="filter-label">من تاريخ:</span>
+        <span class="filter-value">{{ date_from }}</span>
+    </div>
+    {% endif %}
+    {% if date_to %}
+    <div class="filter-item">
+        <span class="filter-label">إلى تاريخ:</span>
+        <span class="filter-value">{{ date_to }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Debts Details Table -->
+{% if debts %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon"></div>
+        <div class="section-title">سجل الديون والمدفوعات التفصيلي</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    {% if not person_name %}
+                    <th>الاسم</th>
+                    {% endif %}
+                    <th>النوع</th>
+                    <th>المبلغ</th>
+                    <th>ملاحظات</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for debt in debts %}
+                <tr>
+                    {% if not person_name %}
+                    <td class="font-bold">{{ debt.person_name }}</td>
+                    {% endif %}
+                    <td>
+                        {% if debt.entry_type == 'debt' %}
+                        <span class="badge badge-error">دين</span>
+                        {% elif debt.entry_type == 'payment' %}
+                        <span class="badge badge-success">دفعة</span>
+                        {% else %}
+                        <span class="badge badge-warning">التزام</span>
+                        {% endif %}
+                    </td>
+                    <td
+                        class="font-bold {% if debt.entry_type == 'payment' %}text-success{% elif debt.entry_type == 'debt' %}text-error{% else %}text-warning{% endif %}">
+                        {{ debt.amount|mill_intcomma }}
+                    </td>
+                    <td class="text-muted">
+                        {% if debt.sale %}
+                        <div class="sale-details" style="line-height: 1.6;">
+                            <strong>فاتورة {{ debt.sale.invoice_number }}</strong><br>
+                            المادة: {{ debt.sale.get_item_type_display }} |
+                            الكمية: {{ debt.sale.quantity_kilos|divide:1000|mill_intcomma }} طن |
+                            السعر: {{ debt.sale.price_per_ton|mill_intcomma }} د.ع/طن<br>
+                            السائق: {{ debt.sale.driver_name|default:"-" }}
+                        </div>
+                        {% elif "{{" in debt.notes %}
+                        <span style="color: var(--warning-500);">فاتورة مرتبطة</span>
+                        {% else %}
+                        {{ debt.notes|default:"-" }}
+                        {% endif %}
+                    </td>
+                    <td>{{ debt.date|date:"Y/m/d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"></div>
+    <p>لا توجد سجلات ديون أو مدفوعات بناءً على معايير البحث المحددة</p>
+</div>
+{% endif %}
+
+{% endblock %}

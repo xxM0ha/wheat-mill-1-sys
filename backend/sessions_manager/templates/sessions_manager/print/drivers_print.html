@@ -1,0 +1,102 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+
+{% block title %}تقرير السواقين{% endblock %}
+
+{% block report_title %}تقرير السواقين{% endblock %}
+
+{% block filters %}
+{% if driver_name %}
+<div class="filter-item">
+    <span class="filter-label">السائق:</span>
+    <span class="filter-value">{{ driver_name }}</span>
+</div>
+{% endif %}
+{% if date_from %}
+<div class="filter-item">
+    <span class="filter-label">من تاريخ:</span>
+    <span class="filter-value">{{ date_from }}</span>
+</div>
+{% endif %}
+{% if date_to %}
+<div class="filter-item">
+    <span class="filter-label">إلى تاريخ:</span>
+    <span class="filter-value">{{ date_to }}</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Jobs Details Table -->
+{% if jobs %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon"></div>
+        <div class="section-title">سجل الرحلات التفصيلي</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    {% if not driver_name %}
+                    <th>اسم السائق</th>
+                    {% endif %}
+                    <th>اسم السايلو</th>
+                    <th>رقم القائمة</th>
+                    <th>الكمية</th>
+                    <th>سعر النقل</th>
+                    <th>المبلغ</th>
+                    <th>السلف</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    {% if not driver_name %}
+                    <td class="font-bold">{{ job.driver_name }}</td>
+                    {% endif %}
+                    <td>{{ job.silo_name|default:"-" }}</td>
+                    <td>{{ job.invoice_number|default:"-" }}</td>
+                    <td>
+                        {% if job.silo_name == 'سلف' %}
+                        -
+                        {% else %}
+                        {{ job.quantity|divide:1000|mill_intcomma }}
+                        {% endif %}
+                    </td>
+                    <td>{{ job.transport_price_per_ton|mill_comma }}</td>
+                    <td class="font-bold text-primary">{{ job.total_amount|mill_intcomma }}</td>
+                    <td class="text-warning">{{ job.advance_payment|mill_intcomma }}</td>
+                    <td>{{ job.date|date:"Y/m/d" }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="table-footer">
+                    <td colspan="{% if driver_name %}2{% else %}3{% endif %}" class="text-center">المجموع الكلي</td>
+                    <td>{{ summary.total_quantity|default:0|divide:1000|mill_comma }}</td>
+                    <td></td>
+                    <td>{{ summary.total_transport|mill_intcomma }}</td>
+                    <td>{{ summary.total_advances|mill_intcomma }}</td>
+                    <td></td>
+                </tr>
+                <tr class="table-footer"
+                    style="background: var(--success-50); border-top: 2px solid var(--success-500);">
+                    <td colspan="{% if driver_name %}4{% else %}5{% endif %}" class="text-center font-bold"
+                        style="color: var(--success-700);">صافي المستحقات</td>
+                    <td colspan="2" class="font-bold" style="color: var(--success-700); font-size: 1.1em;">{{
+                        summary.net_amount|mill_intcomma }}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"></div>
+    <p>لا توجد رحلات مسجلة بناءً على معايير البحث المحددة</p>
+</div>
+{% endif %}
+
+{% endblock %}

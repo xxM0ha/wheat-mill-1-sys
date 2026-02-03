@@ -1,0 +1,86 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+{% load humanize %}
+
+{% block title %}كشف حساب شريك - {{ partner_name }}{% endblock %}
+
+{% block report_title %}كشف حساب شريك{% endblock %}
+
+{% block filters %}
+<div class="filter-item">
+    <span class="filter-label">الشريك:</span>
+    <span class="filter-value">{{ partner_name }}</span>
+</div>
+{% if session %}
+<div class="filter-item">
+    <span class="filter-label">الجلسة:</span>
+    <span class="filter-value">{{ session.quota_label }}</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Transactions Table -->
+{% if transactions %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon">📋</div>
+        <div class="section-title">سجل الحركات المالية التفصيلي</div>
+        <div class="section-count">{{ transactions|length }} عملية</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>التاريخ</th>
+                    <th>نوع العملية</th>
+                    <th>المبلغ</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td class="text-muted">{{ forloop.counter }}</td>
+                    <td>{{ t.date|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if t.type == 'deposit' %}
+                        <span class="badge badge-success">إيداع</span>
+                        {% elif t.type == 'profit' %}
+                        <span class="badge badge-primary">أرباح</span>
+                        {% else %}
+                        <span class="badge badge-error">سحب</span>
+                        {% endif %}
+                    </td>
+                    <td
+                        class="font-bold {% if t.type == 'deposit' or t.type == 'profit' %}text-success{% else %}text-error{% endif %}">
+                        {% if t.type == 'withdrawal' %}-{% endif %}{{ t.amount|mill_intcomma }}
+                    </td>
+                    <td class="text-muted">{{ t.notes|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="table-footer">
+                    <td colspan="3" class="text-center font-bold">الرصيد الصافي النهائي</td>
+                    <td class="font-bold {% if stats.net >= 0 %}text-success{% else %}text-error{% endif %}">
+                        {% if stats.net >= 0 %}
+                        {{ stats.net|mill_intcomma }} - إيداع
+                        {% else %}
+                        {{ stats.net|abs_val|mill_intcomma }} - سحب
+                        {% endif %}
+                    </td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">💸</div>
+    <p>لا توجد حركات مالية مسجلة لهذا الشريك في هذه الجلسة</p>
+</div>
+{% endif %}
+
+{% endblock %}

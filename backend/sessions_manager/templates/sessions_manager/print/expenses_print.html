@@ -1,0 +1,59 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+
+{% block title %}تقرير المصاريف{% endblock %}
+
+{% block report_title %}تقرير المصاريف{% endblock %}
+
+{% block filters %}
+{% if session %}
+<div class="filter-item">
+    <span class="filter-label">الجلسة:</span>
+    <span class="filter-value">{{ session.name }}</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Expenses Details Table -->
+{% if expenses %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon"></div>
+        <div class="section-title">سجل المصاريف التفصيلي</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>المبلغ</th>
+                    <th>الوصف</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td class="font-bold text-error">{{ expense.amount|mill_intcomma }}</td>
+                    <td class="font-bold">{{ expense.name }}</td>
+                    <td>{{ expense.created_at|date:"Y/m/d" }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="table-footer">
+                    <td>{{ summary.total_expenses|mill_intcomma }}</td>
+                    <td class="text-center">المجموع الكلي</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon"></div>
+    <p>لا توجد مصاريف مسجلة</p>
+</div>
+{% endif %}
+
+{% endblock %}

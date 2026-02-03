@@ -1,0 +1,124 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+
+{% block title %}تقرير الجلسة - {{ session.name }}{% endblock %}
+
+{% block report_title %}تقرير الجلسة{% endblock %}
+
+{% block filters %}
+<div class="filter-item">
+    <span class="filter-label">اسم الجلسة:</span>
+    <span class="filter-value">{{ session.name }}</span>
+</div>
+<div class="filter-item">
+    <span class="filter-label">تاريخ البداية:</span>
+    <span class="filter-value">{{ session.start_date|date:"Y/m/d" }}</span>
+</div>
+{% if session.end_date %}
+<div class="filter-item">
+    <span class="filter-label">تاريخ النهاية:</span>
+    <span class="filter-value">{{ session.end_date|date:"Y/m/d" }}</span>
+</div>
+{% endif %}
+<div class="filter-item">
+    <span class="filter-label">الحالة:</span>
+    <span class="filter-value">{% if session.is_active %}مفتوحة{% else %}مغلقة{% endif %}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Sales Section -->
+{% if sales %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon"></div>
+        <div class="section-title">المبيعات</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>رقم الفاتورة</th>
+                    <th>المشتري</th>
+                    <th>الصنف</th>
+                    <th>الكمية</th>
+                    <th>الوحدة</th>
+                    <th>السعر</th>
+                    <th>الإجمالي</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td class="font-medium">{{ sale.invoice_number|default:"-" }}</td>
+                    <td class="font-bold">{{ sale.buyer_name }}</td>
+                    <td>{{ sale.get_item_type_display }}</td>
+                    <td>
+                        {% if sale.item_type == 'flour' %}
+                        {{ sale.quantity_kilos|divide:50|floatformat:0 }}
+                        {% else %}
+                        {{ sale.quantity_kilos|divide:1000|floatformat:3 }}
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{% if sale.item_type == 'flour' %}كيس{% else %}طن{% endif %}</td>
+                    <td>
+                        {% if sale.item_type == 'flour' %}
+                        {{ sale.total_amount|divide_float:sale.quantity_kilos|multiply:50|mill_intcomma }}
+                        {% else %}
+                        {{ sale.price_per_ton|mill_intcomma }}
+                        {% endif %}
+                    </td>
+                    <td class="font-bold text-primary">{{ sale.total_amount|mill_intcomma }}</td>
+                    <td>{{ sale.date|date:"Y/m/d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Expenses Section -->
+{% if expenses %}
+<div class="section">
+    <div class="section-header">
+        <div class="section-icon"></div>
+        <div class="section-title">المصاريف</div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>المبلغ</th>
+                    <th>الوصف</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td class="font-bold text-error">{{ expense.amount|mill_intcomma }}</td>
+                    <td class="font-bold">{{ expense.name }}</td>
+                    <td>{{ expense.created_at|date:"Y/m/d" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">لا توجد مصاريف</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not sales and not expenses %}
+<div class="empty-state">
+    <div class="empty-state-icon"></div>
+    <p>لا توجد بيانات مسجلة لهذه الجلسة</p>
+</div>
+{% endif %}
+
+{% endblock %}
