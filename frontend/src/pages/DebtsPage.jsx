@@ -191,12 +191,13 @@ function DebtsPage() {
 
     const fetchSuggestions = async () => {
         try {
-            const response = await api.get('/sessions/sales/suggestions/')
-            setSuggestions(response.data.buyers || [])
+            const response = await api.get('/sessions/debts/suggestions/')
+            setSuggestions(response.data.persons || [])
         } catch (err) {
             console.error('Error fetching suggestions:', err)
         }
     }
+
 
     const formatNumber = (num) => {
         if (num === undefined || num === null || num === '') return ''
@@ -401,13 +402,14 @@ function DebtsPage() {
             return
         }
 
-        const confirmResult = window.confirm(`تحذير: سيتم حذف جميع الفواتير والديون والتسديدات المتعلقة بـ (${filters.person_name}). هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.`)
+        const confirmResult = window.confirm(`تحذير: سيتم حذف جميع الديون والتسديدات المتعلقة بـ (${filters.person_name}) وتحويل المبيعات المرتبطة إلى مدفوعة بالكامل. هل أنت متأكد؟`)
         if (!confirmResult) return
 
         setLoading(true)
         try {
-            await api.post('/sessions/debts/bulk_delete_by_person/', { person_name: filters.person_name })
-            alert('تم حذف جميع بيانات العميل بنجاح')
+            const response = await api.post('/sessions/debts/bulk_delete_by_person/', { person_name: filters.person_name })
+            const details = response.data.details
+            alert(`تمت العملية بنجاح:\n- تم حذف ${details.debts_deleted} سجل دين/تسديد\n- تم تحويل ${details.sales_marked_paid} مبيعات إلى مدفوعة`)
             setFilters({ ...filters, person_name: '' })
             fetchDebts()
             fetchSuggestions()
@@ -445,7 +447,7 @@ function DebtsPage() {
                         {filters.person_name && (
                             <button className="btn btn-danger flex items-center gap-2" onClick={handleBulkDelete}>
                                 <UserMinus size={18} />
-                                حذف بيانات العميل كلياً
+                                حذف ديون العميل
                             </button>
                         )}
                         <button className="btn btn-secondary flex items-center gap-2" onClick={handlePrint}>
@@ -641,7 +643,7 @@ function DebtsPage() {
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-bold text-gray-500">فلترة بالعميل:</span>
                                     <select
-                                        className="form-input py-1 px-3 text-sm h-auto w-40"
+                                        className="form-input py-1 px-3 text-sm h-auto w-64"
                                         value={filters.person_name}
                                         onChange={(e) => setFilters({ ...filters, person_name: e.target.value })}
                                     >

@@ -80,14 +80,7 @@
                     <td>{{ summary.total_advances|mill_intcomma }}</td>
                     <td></td>
                 </tr>
-                <tr class="table-footer"
-                    style="background: var(--success-50); border-top: 2px solid var(--success-500);">
-                    <td colspan="{% if driver_name %}4{% else %}5{% endif %}" class="text-center font-bold"
-                        style="color: var(--success-700);">صافي المستحقات</td>
-                    <td colspan="2" class="font-bold" style="color: var(--success-700); font-size: 1.1em;">{{
-                        summary.net_amount|mill_intcomma }}</td>
-                    <td></td>
-                </tr>
+
             </tbody>
         </table>
     </div>

@@ -29,6 +29,51 @@
         <div class="section-title">سجل الحركات المالية التفصيلي</div>
         <div class="section-count">{{ transactions|length }} عملية</div>
     </div>
+
+    <!-- Net Balance Display - Above Table -->
+    <style>
+        .net-balance-box {
+            padding: 20px;
+            background: var(--white);
+            border: 2px solid;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .net-balance-box.positive {
+            border-color: var(--success-500);
+        }
+
+        .net-balance-box.negative {
+            border-color: var(--error-500);
+        }
+
+        .net-balance-amount {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .net-balance-amount.positive {
+            color: var(--success-600);
+        }
+
+        .net-balance-amount.negative {
+            color: var(--error-500);
+        }
+    </style>
+    <div class="net-balance-box {% if stats.net >= 0 %}positive{% else %}negative{% endif %}">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 16px; font-weight: 700; color: var(--gray-700);">الرصيد الصافي النهائي</span>
+            <span class="net-balance-amount {% if stats.net >= 0 %}positive{% else %}negative{% endif %}">
+                {% if stats.net >= 0 %}
+                {{ stats.net|mill_intcomma }} - إيداع
+                {% else %}
+                {{ stats.net|abs_val|mill_intcomma }} - سحب
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
     <div class="table-container">
         <table>
             <thead>
@@ -61,17 +106,6 @@
                     <td class="text-muted">{{ t.notes|default:"-" }}</td>
                 </tr>
                 {% endfor %}
-                <tr class="table-footer">
-                    <td colspan="3" class="text-center font-bold">الرصيد الصافي النهائي</td>
-                    <td class="font-bold {% if stats.net >= 0 %}text-success{% else %}text-error{% endif %}">
-                        {% if stats.net >= 0 %}
-                        {{ stats.net|mill_intcomma }} - إيداع
-                        {% else %}
-                        {{ stats.net|abs_val|mill_intcomma }} - سحب
-                        {% endif %}
-                    </td>
-                    <td></td>
-                </tr>
             </tbody>
         </table>
     </div>

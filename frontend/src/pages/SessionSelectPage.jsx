@@ -12,14 +12,17 @@ import {
     Mailbox,
     AlertCircle,
     ChevronLeft,
-    Trash2
+    Trash2,
+    Pencil,
+    Check,
+    X
 } from 'lucide-react'
 import { formatDate } from '../utils/dateUtils'
 
 function SessionSelectPage() {
     const navigate = useNavigate()
     const { user, logout } = useAuth()
-    const { sessions, loading, fetchSessions, createSession, selectSession, deleteSession } = useSession()
+    const { sessions, loading, fetchSessions, createSession, selectSession, deleteSession, updateSession, currentSession } = useSession()
 
     // Step 1: Select system type
     // Step 2: Select quota/batch number or view existing sessions
@@ -32,9 +35,18 @@ function SessionSelectPage() {
     const [error, setError] = useState('')
     const [showNewSession, setShowNewSession] = useState(false)
     const [deleteConfirm, setDeleteConfirm] = useState(null)
+    const [editingSessionId, setEditingSessionId] = useState(null)
+    const [editingSessionName, setEditingSessionName] = useState('')
 
     useEffect(() => {
         fetchSessions()
+
+        // If there's a current session, skip to step 2 (sessions list) with the correct type
+        if (currentSession) {
+            setSelectedType(currentSession.session_type)
+            setStep(2)
+            fetchSessions({ session_type: currentSession.session_type })
+        }
     }, [])
 
     const handleTypeSelect = (type) => {
@@ -88,6 +100,33 @@ function SessionSelectPage() {
         } catch (err) {
             setError(err.response?.data?.error || 'حدث خطأ في حذف بيانات الجلسة')
         }
+    }
+
+    const handleEditSession = (session) => {
+        setEditingSessionId(session.id)
+        // Use custom_name if it exists, otherwise use the default quota_label
+        setEditingSessionName(session.custom_name || session.quota_label)
+    }
+
+    const handleSaveSessionName = async (sessionId) => {
+        try {
+            if (!editingSessionName.trim()) {
+                setError('يرجى إدخال اسم للجلسة')
+                return
+            }
+
+            await updateSession(sessionId, { custom_name: editingSessionName.trim() })
+            setEditingSessionId(null)
+            setEditingSessionName('')
+            setError('')
+        } catch (err) {
+            setError(err.response?.data?.error || 'حدث خطأ في تحديث اسم الجلسة')
+        }
+    }
+
+    const handleCancelEdit = () => {
+        setEditingSessionId(null)
+        setEditingSessionName('')
     }
 
     const handleBack = () => {
@@ -232,14 +271,76 @@ function SessionSelectPage() {
                                                     >
                                                         <div
                                                             className="session-item-info"
-                                                            onClick={() => handleSessionClick(session)}
-                                                            style={{ cursor: 'pointer', flex: 1 }}
+                                                            onClick={() => editingSessionId !== session.id && handleSessionClick(session)}
+                                                            style={{ cursor: editingSessionId === session.id ? 'default' : 'pointer', flex: 1 }}
                                                         >
                                                             <div className="session-item-icon">
                                                                 {selectedType === 'ration_card' ? <ClipboardList size={20} /> : <Sprout size={20} />}
                                                             </div>
                                                             <div className="session-item-details">
-                                                                <h4>{session.quota_label}</h4>
+                                                                {editingSessionId === session.id ? (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={editingSessionName}
+                                                                            onChange={(e) => setEditingSessionName(e.target.value)}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="form-input"
+                                                                            style={{
+                                                                                width: '250px',
+                                                                                padding: 'var(--spacing-1) var(--spacing-2)',
+                                                                                fontSize: 'var(--font-size-base)',
+                                                                                height: 'auto'
+                                                                            }}
+                                                                            placeholder="اسم الجلسة..."
+                                                                            autoFocus
+                                                                        />
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                handleSaveSessionName(session.id)
+                                                                            }}
+                                                                            className="btn btn-icon btn-success"
+                                                                            style={{ padding: 'var(--spacing-1)', minWidth: 'auto' }}
+                                                                            title="حفظ"
+                                                                        >
+                                                                            <Check size={16} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                handleCancelEdit()
+                                                                            }}
+                                                                            className="btn btn-icon btn-secondary"
+                                                                            style={{ padding: 'var(--spacing-1)', minWidth: 'auto' }}
+                                                                            title="إلغاء"
+                                                                        >
+                                                                            <X size={16} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                                                                        <h4>{session.quota_label}</h4>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                handleEditSession(session)
+                                                                            }}
+                                                                            className="btn btn-icon btn-secondary"
+                                                                            style={{
+                                                                                padding: 'var(--spacing-1)',
+                                                                                minWidth: 'auto',
+                                                                                opacity: 0,
+                                                                                transition: 'opacity 0.2s'
+                                                                            }}
+                                                                            onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                                                                            onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                                                                            title="تعديل الاسم"
+                                                                        >
+                                                                            <Pencil size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
                                                                 <p>
                                                                     بدأت: {formatDate(session.start_date)}
                                                                     {session.end_date && ` | انتهت: ${formatDate(session.end_date)}`}
@@ -413,6 +514,12 @@ function SessionSelectPage() {
                     </div>
                 )}
             </main>
+
+            <style>{`
+                .session-item-details:hover .btn-icon {
+                    opacity: 1 !important;
+                }
+            `}</style>
         </div>
     )
 }

@@ -320,7 +320,7 @@ function DriversPage() {
             return
         }
 
-        const confirmResult = window.confirm(`تحذير: سيتم حذف جميع السجلات والنقليات والسلف المتعلقة بـ (${filters.driver_name}). هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.`)
+        const confirmResult = window.confirm(`تحذير: سيتم حذف السائق (${filters.driver_name}) نهائياً من النظام، بالإضافة إلى جميع سجلاته ونقلياته في هذه الجلسة. هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.`)
         if (!confirmResult) return
 
         setLoading(true)

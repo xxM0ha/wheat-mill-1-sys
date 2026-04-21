@@ -279,7 +279,7 @@ class DebtViewSet(viewsets.ModelViewSet):
             
         person_name = self.request.query_params.get('person_name')
         if person_name:
-            queryset = queryset.filter(person_name__icontains=person_name)
+            queryset = queryset.filter(person_name=person_name)
             
         date_from = self.request.query_params.get('date_from')
         if date_from:
@@ -294,29 +294,47 @@ class DebtViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def bulk_delete_by_person(self, request):
         """
-        Delete all debts and sales associated with a person name.
+        Delete all debts for a person, and mark related sales as paid.
+        Sales are not deleted - instead they are marked as fully paid.
         """
         person_name = request.data.get('person_name')
         if not person_name:
             return Response({'error': 'اسم الشخص مطلوب'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Delete related Sales (this will also delete related Debts via CASCADE)
-        sales_deleted, _ = Sale.objects.filter(buyer_name=person_name).delete()
+        # Find sales related to this person that have debts
+        sales_with_debts = Sale.objects.filter(buyer_name=person_name, payment_type__in=['debt', 'partial'])
+        sales_updated = 0
         
-        # Delete remaining Debts that might not be linked to a sale
+        for sale in sales_with_debts:
+            # Mark sale as fully paid
+            sale.amount_paid = sale.total_amount
+            sale.payment_type = 'cash'
+            sale.save()
+            sales_updated += 1
+        
+        # Delete all debt entries for this person (including those linked to sales)
         debts_deleted, _ = Debt.objects.filter(person_name=person_name).delete()
         
-        # Optionally delete the Client record if it exists
-        client_deleted, _ = Client.objects.filter(name=person_name).delete()
-        
         return Response({
-            'message': f'تم حذف البيانات بنجاح',
+            'message': f'تم حذف ديون العميل وتسوية المبيعات بنجاح',
             'details': {
-                'sales': sales_deleted,
-                'debts': debts_deleted,
-                'client': client_deleted
+                'debts_deleted': debts_deleted,
+                'sales_marked_paid': sales_updated
             }
         })
+
+    @action(detail=False, methods=['get'])
+    def suggestions(self, request):
+        """
+        Get unique person names who have debt records.
+        """
+        # Get all unique person names from Debt records
+        person_names = Debt.objects.values_list('person_name', flat=True).distinct()
+        
+        return Response({
+            'persons': sorted(list(set(filter(None, person_names))))
+        })
+
 
 
 class DriverJobViewSet(viewsets.ModelViewSet):
@@ -376,10 +394,15 @@ class DriverJobViewSet(viewsets.ModelViewSet):
         # Delete DriverJobs for this driver in the specified session only
         jobs_deleted, _ = DriverJob.objects.filter(driver_name=driver_name, session_id=session_id).delete()
         
+        # Also delete the Driver entity to remove them from suggestions
+        # This effectively "removes the driver" from the system
+        drivers_deleted, _ = Driver.objects.filter(name=driver_name).delete()
+        
         return Response({
-            'message': f'تم حذف البيانات بنجاح',
+            'message': f'تم حذف السائق {driver_name} وجميع بياناته بنجاح',
             'details': {
-                'jobs': jobs_deleted
+                'jobs': jobs_deleted,
+                'drivers_deleted': drivers_deleted
             }
         })
 

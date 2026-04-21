@@ -56,6 +56,14 @@ class Session(models.Model):
         verbose_name="السايلو الافتراضي"
     )
     
+    custom_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="اسم مخصص للجلسة",
+        help_text="اسم مخصص للجلسة (اختياري). إذا لم يتم تعيينه، سيتم استخدام الاسم الافتراضي"
+    )
+    
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="تاريخ الإنشاء"
@@ -86,7 +94,9 @@ class Session(models.Model):
     
     @property
     def quota_label(self):
-        """Return the appropriate label based on session type."""
+        """Return custom name if set, otherwise return the default label based on session type."""
+        if self.custom_name:
+            return self.custom_name
         if self.session_type == self.SESSION_TYPE_RATION_CARD:
             return f"حصة {self.quota_number}"
         return f"دفعة {self.quota_number}"

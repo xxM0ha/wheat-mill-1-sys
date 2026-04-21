@@ -1,0 +1,91 @@
+{% extends "sessions_manager/print/base_print.html" %}
+{% load custom_filters %}
+
+{% block title %}فاتورة بيع - {{ sale.invoice_number }}{% endblock %}
+
+{% block report_title %}فاتورة بيع{% endblock %}
+
+{% block filter_bar %}{% endblock %}
+
+{% block content %}
+
+<div class="invoice-card"
+    style="background: var(--white); border-radius: 16px; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--gray-100); max-width: 800px; margin: 0 auto;">
+
+    <div
+        style="background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%); padding: 16px; text-align: center; font-weight: 700; font-size: 20px; margin-bottom: 24px; border-radius: 12px; color: var(--primary-800); border: 2px solid var(--primary-300);">
+        رقم الفاتورة: {{ sale.invoice_number }}
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500; width: 40%;">
+                التاريخ:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {{ sale.date|date:"Y/m/d" }}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">اسم المشتري:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {{ sale.buyer_name }}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">اسم السائق:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {{ sale.driver_name|default:"-" }}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">نوع المادة:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {{ sale.get_item_type_display }}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">الكمية:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {% if sale.item_type == 'flour' %}
+                {{ sale.quantity_kilos|divide:50|mill_comma }} كيس
+                {% else %}
+                {{ sale.quantity_kilos|divide:1000|mill_comma }} طن
+                {% endif %}
+            </td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">السعر:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {% if sale.item_type == 'flour' %}
+                {{ sale.total_amount|divide_float:sale.quantity_kilos|multiply:50|mill_intcomma }} د.ع/كيس
+                {% else %}
+                {{ sale.price_per_ton|mill_intcomma }} د.ع/طن
+                {% endif %}
+            </td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--gray-100);">
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">نوع الدفع:</td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {{ sale.get_payment_type_display }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 12px 8px; color: var(--gray-500); font-size: 14px; font-weight: 500;">المبلغ المدفوع:
+            </td>
+            <td style="padding: 12px 8px; font-weight: 700; font-size: 15px; color: var(--gray-800); text-align: left;">
+                {{ sale.amount_paid|mill_intcomma }} د.ع</td>
+        </tr>
+    </table>
+
+    <div
+        style="background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%); padding: 20px; margin-top: 24px; border-radius: 12px; border: 2px solid var(--primary-200);">
+        <div
+            style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary-800);">
+            <span>المبلغ الكلي:</span>
+            <span>{{ sale.total_amount|mill_intcomma }} د.ع</span>
+        </div>
+    </div>
+
+    <div
+        style="text-align: center; margin-top: 32px; padding-top: 20px; border-top: 2px solid var(--gray-100); color: var(--gray-500); font-size: 12px;">
+        <p>شكراً لتعاملكم معنا</p>
+        <p style="margin-top: 8px;">تم إنشاء هذه الفاتورة بواسطة النبراس لطحن الحبوب</p>
+    </div>
+</div>
+
+{% endblock %}

@@ -343,3 +343,19 @@ def print_partner_report(request):
     }
     
     return render(request, 'sessions_manager/print/partner_print.html', context)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def print_invoice(request, sale_id):
+    """Print view for a single sale invoice."""
+    sale = get_object_or_404(Sale, id=sale_id)
+    
+    context = {
+        'sale': sale,
+        'session': sale.session,
+        'print_date': timezone.now(),
+    }
+    
+    return render(request, 'sessions_manager/print/invoice_print.html', context)
+

@@ -29,8 +29,8 @@ function SalesPage() {
     const [suggestions, setSuggestions] = useState({ buyers: [], drivers: [] })
     const [filters, setFilters] = useState({
         buyer_name: '',
-        date_from: '',
-        date_to: ''
+        date_from: new Date().toISOString().split('T')[0],
+        date_to: new Date().toISOString().split('T')[0]
     })
 
     // Form state
@@ -43,7 +43,7 @@ function SalesPage() {
         invoice_number: '',
         price_per_ton: '',
         total_amount: '0',
-        payment_type: 'cash',
+        payment_type: 'debt',
         amount_paid: ''
     })
 
@@ -186,7 +186,7 @@ function SalesPage() {
                 invoice_number: '',
                 price_per_ton: '',
                 total_amount: '0',
-                payment_type: 'cash',
+                payment_type: 'debt',
                 amount_paid: ''
             })
 
@@ -232,7 +232,7 @@ function SalesPage() {
             invoice_number: '',
             price_per_ton: '',
             total_amount: '0',
-            payment_type: 'cash',
+            payment_type: 'debt',
             amount_paid: ''
         })
     }
@@ -266,122 +266,72 @@ function SalesPage() {
         window.open(url, '_blank')
     }
 
-    const handlePrintForm = () => {
-        if (!formData.buyer_name || !formData.quantity_kilos || !formData.price_per_ton) {
+    const handlePrintForm = async () => {
+        if (!formData.buyer_name || !formData.quantity_kilos || !formData.price_per_ton || !formData.invoice_number) {
             setError('يرجى ملء الحقول المطلوبة قبل الطباعة')
             return
         }
 
-        const itemTypeLabels = {
-            'flour': 'طحين',
-            'bran': 'نخالة',
-            'impurities': 'شوائب',
-            'wheat': 'حنطة',
-            'broken_wheat': 'كسر حنطة'
+        try {
+            setSubmitLoading(true)
+
+            // If editing, use the existing sale ID
+            let saleId = editingId
+
+            // If not editing, save the sale first
+            if (!editingId) {
+                const isFlour = formData.item_type === 'flour'
+                const qty = parseFloat(formData.quantity_kilos)
+                const price = parseFloat(formData.price_per_ton)
+
+                const payload = {
+                    ...formData,
+                    session: currentSession.id,
+                    quantity_kilos: isFlour ? qty * 50 : qty * 1000,
+                    price_per_ton: isFlour ? (price / 50) * 1000 : price,
+                    total_amount: parseFloat(formData.total_amount),
+                    amount_paid: parseFloat(formData.amount_paid)
+                }
+
+                const response = await api.post('/sessions/sales/', payload)
+                saleId = response.data.id
+
+                // Add to sales list
+                const sale = response.data
+                const processedSale = {
+                    ...sale,
+                    display_quantity: sale.item_type === 'flour' ? parseFloat(sale.quantity_kilos) / 50 : parseFloat(sale.quantity_kilos) / 1000
+                }
+                setSales([processedSale, ...sales])
+
+                // Reset form
+                setFormData({
+                    buyer_name: '',
+                    driver_name: '',
+                    item_type: 'flour',
+                    quantity_kilos: '',
+                    date: new Date().toISOString().split('T')[0],
+                    invoice_number: '',
+                    price_per_ton: '',
+                    total_amount: '0',
+                    payment_type: 'debt',
+                    amount_paid: ''
+                })
+
+                // Refresh suggestions
+                fetchSuggestions()
+            }
+
+            // Open the backend print URL
+            const url = `http://localhost:8000/api/sessions/print/invoice/${saleId}/`
+            window.open(url, '_blank')
+
+        } catch (err) {
+            console.error('Error printing invoice:', err)
+            setError(err.response?.data?.error || 'حدث خطأ في طباعة الفاتورة')
+        } finally {
+            setSubmitLoading(false)
         }
-
-        const paymentLabels = {
-            'cash': 'نقدي',
-            'debt': 'دين',
-            'partial': 'جزئي'
-        }
-
-        const printWindow = window.open('', '_blank')
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html dir="rtl" lang="ar">
-            <head>
-                <meta charset="UTF-8">
-                <title>فاتورة بيع - ${formData.invoice_number || 'بدون رقم'}</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { 
-                        font-family: 'Segoe UI', Tahoma, sans-serif; 
-                        padding: 20px; 
-                        max-width: 400px; 
-                        margin: 0 auto;
-                        direction: rtl;
-                    }
-                    .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 15px; margin-bottom: 15px; }
-                    .header h1 { font-size: 24px; margin-bottom: 5px; }
-                    .header p { color: #666; font-size: 14px; }
-                    .invoice-number { background: #f5f5f5; padding: 8px; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 15px; border-radius: 5px; }
-                    .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-                    .row:last-child { border-bottom: none; }
-                    .label { color: #666; font-size: 14px; }
-                    .value { font-weight: bold; font-size: 14px; }
-                    .total-section { background: #f0f8ff; padding: 15px; margin-top: 15px; border-radius: 8px; }
-                    .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #0066cc; }
-                    .footer { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #333; color: #666; font-size: 12px; }
-                    @media print { 
-                        body { padding: 10px; } 
-                        @page { margin: 0.5cm; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>فاتورة بيع</h1>
-                    <p>${currentSession?.quota_label || ''} - ${currentSession?.session_type_display || ''}</p>
-                </div>
-                
-                <div class="invoice-number">
-                    رقم الفاتورة: ${formData.invoice_number || '-'}
-                </div>
-
-                <div class="details">
-                    <div class="row">
-                        <span class="label">التاريخ:</span>
-                        <span class="value">${formData.date}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">اسم المشتري:</span>
-                        <span class="value">${formData.buyer_name}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">اسم السائق:</span>
-                        <span class="value">${formData.driver_name || '-'}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">نوع المادة:</span>
-                        <span class="value">${itemTypeLabels[formData.item_type] || formData.item_type}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">الكمية:</span>
-                        <span class="value">${formatNumber(formData.quantity_kilos)} ${formData.item_type === 'flour' ? 'كيس' : 'طن'}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">السعر:</span>
-                        <span class="value">${formatNumber(formData.price_per_ton)} د.ع/${formData.item_type === 'flour' ? 'كيس' : 'طن'}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">نوع الدفع:</span>
-                        <span class="value">${paymentLabels[formData.payment_type] || formData.payment_type}</span>
-                    </div>
-                    <div class="row">
-                        <span class="label">المبلغ المدفوع:</span>
-                        <span class="value">${formatNumber(formData.amount_paid)} د.ع</span>
-                    </div>
-                </div>
-
-                <div class="total-section">
-                    <div class="total-row">
-                        <span>المبلغ الكلي:</span>
-                        <span>${formatNumber(formData.total_amount)} د.ع</span>
-                    </div>
-                </div>
-
-                <div class="footer">
-                    <p>شكراً لتعاملكم معنا</p>
-                </div>
-            </body>
-            </html>
-        `)
-        printWindow.document.close()
-        printWindow.focus()
-        setTimeout(() => {
-            printWindow.print()
-        }, 250)
     }
 
 
@@ -705,7 +655,7 @@ function SalesPage() {
                                 {(filters.buyer_name || filters.date_from || filters.date_to) && (
                                     <button
                                         className="btn btn-secondary py-1.5 px-3 text-sm h-auto flex items-center gap-1"
-                                        onClick={() => setFilters({ buyer_name: '', date_from: '', date_to: '' })}
+                                        onClick={() => setFilters({ buyer_name: '', date_from: new Date().toISOString().split('T')[0], date_to: new Date().toISOString().split('T')[0] })}
                                     >
                                         <XCircle size={14} />
                                         مسح التصفية

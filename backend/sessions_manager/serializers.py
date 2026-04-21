@@ -45,6 +45,7 @@ class SessionSerializer(serializers.ModelSerializer):
             'created_by',
             'created_by_username',
             'default_silo',
+            'custom_name',
             'created_at',
             'updated_at',
         ]

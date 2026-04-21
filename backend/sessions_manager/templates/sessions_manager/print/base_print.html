@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}تقرير{% endblock %} - النبراس لطحن الحبوب</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* ============================================
            Modern Print Template - Matching UI Colors
@@ -327,7 +328,6 @@
             font-weight: 700;
             color: var(--primary-700);
             font-size: 13px;
-            text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 2px solid var(--primary-200);
         }
@@ -659,19 +659,37 @@
             const date = new Date().toISOString().split('T')[0];
             const filename = `${reportTitle}_${date}.pdf`;
 
-            // Store the original title
-            const originalTitle = document.title;
+            // Hide the action buttons before generating PDF
+            const actionButtons = document.querySelector('.print-actions');
+            actionButtons.style.display = 'none';
 
-            // Set a clean title for the PDF
-            document.title = filename.replace('.pdf', '');
+            // Configure PDF options
+            const opt = {
+                margin: 10,
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait',
+                    compress: true
+                }
+            };
 
-            // Trigger print dialog (user can select "Save as PDF")
-            window.print();
-
-            // Restore original title after a short delay
-            setTimeout(() => {
-                document.title = originalTitle;
-            }, 1000);
+            // Generate and download PDF
+            html2pdf().set(opt).from(document.body).save().then(() => {
+                // Show the buttons again after PDF is generated
+                actionButtons.style.display = 'flex';
+            }).catch((error) => {
+                console.error('Error generating PDF:', error);
+                actionButtons.style.display = 'flex';
+                alert('حدث خطأ أثناء إنشاء ملف PDF');
+            });
         }
     </script>
 </body>

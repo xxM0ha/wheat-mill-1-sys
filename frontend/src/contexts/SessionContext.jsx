@@ -93,6 +93,25 @@ export function SessionProvider({ children }) {
         }
     }
 
+    const updateSession = async (sessionId, updateData) => {
+        setLoading(true)
+        try {
+            const response = await api.patch(`/sessions/${sessionId}/`, updateData)
+            setSessions(prev =>
+                prev.map(s => s.id === sessionId ? response.data : s)
+            )
+            if (currentSession?.id === sessionId) {
+                setCurrentSession(response.data)
+            }
+            return response.data
+        } catch (error) {
+            console.error('Error updating session:', error)
+            throw error
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const selectSession = (session) => {
         setCurrentSession(session)
         localStorage.setItem('currentSessionId', session?.id || '')
@@ -107,6 +126,7 @@ export function SessionProvider({ children }) {
         closeSession,
         reopenSession,
         deleteSession,
+        updateSession,
         selectSession,
     }
 

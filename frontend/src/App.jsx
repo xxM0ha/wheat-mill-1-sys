@@ -10,7 +10,7 @@ import SalesPage from './pages/SalesPage'
 import DebtsPage from './pages/DebtsPage'
 import DriversPage from './pages/DriversPage'
 import CheckPage from './pages/CheckPage'
-import ReportsPage from './pages/ReportsPage'
+
 import PartnersPage from './pages/PartnersPage'
 
 function App() {
@@ -76,14 +76,7 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        <Route
-                            path="/reports"
-                            element={
-                                <ProtectedRoute>
-                                    <ReportsPage />
-                                </ProtectedRoute>
-                            }
-                        />
+
                         <Route
                             path="/partners"
                             element={

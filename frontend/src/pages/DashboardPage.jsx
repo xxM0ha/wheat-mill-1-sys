@@ -7,7 +7,6 @@ import {
     ClipboardList,
     Sprout,
     Construction,
-    BarChart3,
     Banknote,
     Wallet,
     BookOpen,
@@ -200,8 +199,8 @@ function DashboardPage() {
                                 </div>
                             </div>
 
-                            {/* Row 2: 3 Buttons */}
-                            <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '1000px', margin: '0 auto' }}>
+                            {/* Row 2: 2 Buttons */}
+                            <div className="selection-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', maxWidth: '700px', margin: '0 auto' }}>
                                 <div className="selection-card" onClick={() => navigate('/partners')}>
                                     <div className="selection-card-icon" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}><Users size={32} /></div>
                                     <h3>الشركاء</h3>
@@ -211,11 +210,6 @@ function DashboardPage() {
                                     <div className="selection-card-icon" style={{ background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)' }}><CheckSquare size={32} /></div>
                                     <h3>المطابقة (Check)</h3>
                                     <p>تدقيق التوازن بين الحسابات</p>
-                                </div>
-                                <div className="selection-card" onClick={() => navigate('/reports')}>
-                                    <div className="selection-card-icon" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}><BarChart3 size={32} /></div>
-                                    <h3>التقارير</h3>
-                                    <p>عرض وتحميل التقارير</p>
                                 </div>
                             </div>
                         </div>

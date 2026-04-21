@@ -50,7 +50,7 @@ function CheckPage() {
     const fetchDebts = async () => {
         setLoading(true)
         try {
-            const response = await api.get(`/sessions/debts/?session_id=${currentSession.id}`)
+            const response = await api.get('/sessions/debts/')
             setDebts(response.data)
         } catch (err) {
             console.error('Error fetching data:', err)

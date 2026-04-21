@@ -29,7 +29,8 @@ function ExpensesPage() {
     // Form state
     const [formData, setFormData] = useState({
         name: '',
-        amount: ''
+        amount: '',
+        date: new Date().toISOString().split('T')[0]
     })
 
     useEffect(() => {
@@ -104,7 +105,7 @@ function ExpensesPage() {
                 setExpenses([response.data, ...expenses])
             }
 
-            setFormData({ name: '', amount: '' })
+            setFormData({ name: '', amount: '', date: new Date().toISOString().split('T')[0] })
         } catch (err) {
             console.error('Error saving expense:', err)
             setError(err.response?.data?.error || 'حدث خطأ في حفظ البيانات')
@@ -123,14 +124,15 @@ function ExpensesPage() {
         setEditingId(expense.id)
         setFormData({
             name: expense.name,
-            amount: expense.amount.toString()
+            amount: expense.amount.toString(),
+            date: expense.date || new Date().toISOString().split('T')[0]
         })
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     const handleCancelEdit = () => {
         setEditingId(null)
-        setFormData({ name: '', amount: '' })
+        setFormData({ name: '', amount: '', date: new Date().toISOString().split('T')[0] })
     }
 
     const handleDelete = async (id) => {
@@ -200,17 +202,6 @@ function ExpensesPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="flex gap-4 items-end" style={{ flexWrap: 'wrap' }}>
-                            <div className="form-group" style={{ flex: '2', minWidth: '200px', marginBottom: 0 }}>
-                                <label className="form-label">الاسم/البيان</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="مثلاً: شراء وقود"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                />
-                            </div>
-
                             <div className="form-group" style={{ flex: '1', minWidth: '150px', marginBottom: 0 }}>
                                 <label className="form-label">المبلغ</label>
                                 <div style={{ position: 'relative' }}>
@@ -233,7 +224,26 @@ function ExpensesPage() {
                                 </div>
                             </div>
 
+                            <div className="form-group" style={{ flex: '2', minWidth: '200px', marginBottom: 0 }}>
+                                <label className="form-label">الاسم/البيان</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="مثلاً: شراء وقود"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
 
+                            <div className="form-group" style={{ flex: '1', minWidth: '150px', marginBottom: 0 }}>
+                                <label className="form-label">التاريخ</label>
+                                <input
+                                    type="date"
+                                    className="form-date"
+                                    value={formData.date}
+                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                />
+                            </div>
 
                             <div className="flex gap-2">
                                 <button

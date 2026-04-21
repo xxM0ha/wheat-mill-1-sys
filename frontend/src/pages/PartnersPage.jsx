@@ -345,12 +345,17 @@ function PartnersPage() {
                         <div style={{
                             padding: 'var(--spacing-4) var(--spacing-6)',
                             borderBottom: '1px solid var(--gray-100)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
                             background: 'var(--gray-50)'
                         }}>
                             <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)' }}>سجل حركات {selectedPartner?.name}</h3>
+                        </div>
+
+                        {/* Net Balance Display - Moved above table */}
+                        <div style={{
+                            padding: 'var(--spacing-4) var(--spacing-6)',
+                            borderBottom: '2px solid var(--gray-200)',
+                            background: 'var(--white)'
+                        }}>
                             {(() => {
                                 const totalDeposits = filteredTransactions
                                     .filter(t => t.type === 'deposit')
@@ -364,26 +369,33 @@ function PartnersPage() {
 
                                 return (
                                     <div style={{
-                                        textAlign: 'left',
-                                        padding: 'var(--spacing-2) var(--spacing-4)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: 'var(--spacing-3) var(--spacing-5)',
                                         border: isPositive ? '2px solid var(--success-500)' : '2px solid var(--error-500)',
                                         borderRadius: 'var(--radius-lg)',
                                         background: isPositive ? 'var(--success-50)' : 'var(--error-50)'
                                     }}>
-                                        <span style={{ color: 'var(--gray-700)', fontSize: 'var(--font-size-sm)', fontWeight: '700' }}>
-                                            {isPositive ? 'الرصيد (إيداع): ' : 'الرصيد (سحب): '}
+                                        <span style={{
+                                            color: 'var(--gray-700)',
+                                            fontSize: 'var(--font-size-base)',
+                                            fontWeight: '700'
+                                        }}>
+                                            الرصيد الصافي النهائي
                                         </span>
                                         <span style={{
                                             color: isPositive ? 'var(--success-600)' : 'var(--error-600)',
-                                            fontSize: 'var(--font-size-base)', fontWeight: 'bold',
-                                            marginRight: 'var(--spacing-2)'
+                                            fontSize: 'var(--font-size-xl)',
+                                            fontWeight: 'bold'
                                         }}>
-                                            {formatNumber(Math.abs(netBalance))} د.ع
+                                            {formatNumber(Math.abs(netBalance))} د.ع - {isPositive ? 'إيداع' : 'سحب'}
                                         </span>
                                     </div>
                                 );
                             })()}
                         </div>
+
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
                                 <thead>
