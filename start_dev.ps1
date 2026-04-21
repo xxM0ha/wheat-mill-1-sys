@@ -1,5 +1,8 @@
 Write-Host "Starting Wheat-Mill project in dev mode..." -ForegroundColor Green
 
+Write-Host "Checking for updates from GitHub..." -ForegroundColor Yellow
+git pull origin main
+
 # Function to check if a URL is responding
 function Test-UrlReady {
     param ($url, $maxAttempts = 30)
