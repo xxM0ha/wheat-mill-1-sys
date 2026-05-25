@@ -367,6 +367,16 @@ class DriverJob(models.Model):
     date = models.DateField(
         verbose_name="التاريخ"
     )
+    note = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="ملاحظة"
+    )
+    note_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name="تاريخ الملاحظة"
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="تاريخ الإنشاء"

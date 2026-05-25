@@ -15,7 +15,8 @@ import {
     Printer,
     Settings,
     Eye,
-    UserMinus
+    UserMinus,
+    StickyNote
 } from 'lucide-react'
 import { formatDate } from '../utils/dateUtils'
 
@@ -44,7 +45,9 @@ function DriversPage() {
         transport_price_per_ton: '',
         total_amount: '0',
         advance_payment: '0',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        note: '',
+        note_date: ''
     }
 
     const [formData, setFormData] = useState({ ...initialFormState })
@@ -58,6 +61,8 @@ function DriversPage() {
 
     const [showDriverManagementModal, setShowDriverManagementModal] = useState(false)
     const [showAdvancesListModal, setShowAdvancesListModal] = useState(false)
+    const [showNoteModal, setShowNoteModal] = useState(false)
+    const [noteModalJob, setNoteModalJob] = useState(null)
     const [allDrivers, setAllDrivers] = useState([])
     const [managementLoading, setManagementLoading] = useState(false)
 
@@ -258,7 +263,9 @@ function DriversPage() {
             transport_price_per_ton: job.transport_price_per_ton.toString(),
             total_amount: job.total_amount.toString(),
             advance_payment: job.advance_payment.toString(),
-            date: job.date
+            date: job.date,
+            note: job.note || '',
+            note_date: job.note_date || ''
         })
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -510,6 +517,29 @@ function DriversPage() {
                                         required
                                     />
                                 </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="note_date">تاريخ الملاحظة</label>
+                                    <input
+                                        id="note_date"
+                                        type="date"
+                                        className="form-date"
+                                        value={formData.note_date}
+                                        onChange={(e) => setFormData({ ...formData, note_date: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group mt-4">
+                                <label className="form-label" htmlFor="note">ملاحظة</label>
+                                <textarea
+                                    id="note"
+                                    className="form-input"
+                                    rows="2"
+                                    value={formData.note}
+                                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                                    placeholder="أدخل ملاحظة اختيارية..."
+                                />
                             </div>
 
                             <div className="flex justify-end mt-6">
@@ -663,14 +693,15 @@ function DriversPage() {
                                         <th style={{ padding: 'var(--spacing-4) var(--spacing-8)', color: 'var(--gray-600)', fontWeight: '700' }}>سعر النقل</th>
                                         <th style={{ padding: 'var(--spacing-4) var(--spacing-8)', color: 'var(--gray-600)', fontWeight: '700' }}>المبلغ</th>
                                         <th style={{ padding: 'var(--spacing-4) var(--spacing-8)', color: 'var(--gray-600)', fontWeight: '700' }}>السلف</th>
+                                        <th style={{ padding: 'var(--spacing-4) var(--spacing-8)', color: 'var(--gray-600)', fontWeight: '700', textAlign: 'center' }}>ملاحظة</th>
                                         <th style={{ padding: 'var(--spacing-4) var(--spacing-8)', color: 'var(--gray-600)', fontWeight: '700', textAlign: 'center' }}>إجراءات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {loading ? (
-                                        <tr><td colSpan="10" style={{ padding: 'var(--spacing-12)', textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }}></div><p className="mt-4">جاري التحميل...</p></td></tr>
+                                        <tr><td colSpan="11" style={{ padding: 'var(--spacing-12)', textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }}></div><p className="mt-4">جاري التحميل...</p></td></tr>
                                     ) : jobs.filter(j => j.silo_name !== 'سلف').length === 0 ? (
-                                        <tr><td colSpan="10" style={{ padding: 'var(--spacing-12)', textAlign: 'center' }}><FolderOpen size={48} className="text-gray-300 mb-4 mx-auto" /><p style={{ color: 'var(--gray-500)' }}>لا يوجد سجلات نقل</p></td></tr>
+                                        <tr><td colSpan="11" style={{ padding: 'var(--spacing-12)', textAlign: 'center' }}><FolderOpen size={48} className="text-gray-300 mb-4 mx-auto" /><p style={{ color: 'var(--gray-500)' }}>لا يوجد سجلات نقل</p></td></tr>
                                     ) : (
                                         jobs.filter(j => j.silo_name !== 'سلف').map((job, index) => (
                                             <tr key={job.id} style={{ borderBottom: '1px solid var(--gray-100)', background: editingId === job.id ? 'var(--primary-50)' : 'transparent' }}>
@@ -683,6 +714,21 @@ function DriversPage() {
                                                 <td style={{ padding: 'var(--spacing-4) var(--spacing-8)' }}>{formatNumber(job.transport_price_per_ton)}</td>
                                                 <td style={{ padding: 'var(--spacing-4) var(--spacing-8)', fontWeight: 'bold', color: 'var(--primary-700)' }}>{formatNumber(job.total_amount)}</td>
                                                 <td style={{ padding: 'var(--spacing-4) var(--spacing-8)', color: 'var(--error-600)' }}>{formatNumber(job.advance_payment)}</td>
+                                                <td style={{ padding: 'var(--spacing-4) var(--spacing-8)', textAlign: 'center' }}>
+                                                    <button
+                                                        onClick={() => { setNoteModalJob(job); setShowNoteModal(true); }}
+                                                        disabled={!job.note}
+                                                        className="btn btn-icon"
+                                                        title={job.note ? 'عرض الملاحظة' : 'لا توجد ملاحظة'}
+                                                        style={{
+                                                            color: job.note ? 'var(--warning-600, #d97706)' : 'var(--gray-300)',
+                                                            cursor: job.note ? 'pointer' : 'not-allowed',
+                                                            opacity: job.note ? 1 : 0.4
+                                                        }}
+                                                    >
+                                                        <StickyNote size={18} />
+                                                    </button>
+                                                </td>
                                                 <td style={{ padding: 'var(--spacing-4) var(--spacing-8)', textAlign: 'center' }}>
                                                     <div className="flex justify-center gap-2">
                                                         <button onClick={() => handleEdit(job)} className="btn btn-icon text-primary-500" title="تعديل"><Pencil size={18} /></button>
@@ -971,6 +1017,70 @@ function DriversPage() {
 
 
 
+
+            {/* Note View Modal */}
+            {showNoteModal && noteModalJob && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.5)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                    padding: 'var(--spacing-4)'
+                }} onClick={() => { setShowNoteModal(false); setNoteModalJob(null); }}>
+                    <div className="card" style={{
+                        maxWidth: '520px', width: '100%', margin: 0
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-2">
+                                <StickyNote size={20} style={{ color: 'var(--warning-600, #d97706)' }} />
+                                <h3 style={{ margin: 0 }}>ملاحظة السائق</h3>
+                            </div>
+                            <button onClick={() => { setShowNoteModal(false); setNoteModalJob(null); }} className="btn btn-icon btn-secondary">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <div style={{
+                            background: 'var(--gray-50)', borderRadius: 'var(--radius-md)',
+                            padding: 'var(--spacing-4)', marginBottom: 'var(--spacing-4)',
+                            display: 'flex', gap: 'var(--spacing-6)', flexWrap: 'wrap'
+                        }}>
+                            <div>
+                                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--gray-500)', display: 'block' }}>اسم السائق</span>
+                                <span style={{ fontWeight: '700' }}>{noteModalJob.driver_name}</span>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--gray-500)', display: 'block' }}>تاريخ النقلة</span>
+                                <span style={{ fontWeight: '600' }}>{formatDate(noteModalJob.date)}</span>
+                            </div>
+                            {noteModalJob.note_date && (
+                                <div>
+                                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--gray-500)', display: 'block' }}>تاريخ الملاحظة</span>
+                                    <span style={{ fontWeight: '600', color: 'var(--warning-700, #b45309)' }}>{formatDate(noteModalJob.note_date)}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{
+                            border: '1px solid var(--gray-200)', borderRadius: 'var(--radius-md)',
+                            padding: 'var(--spacing-4)', minHeight: '80px',
+                            whiteSpace: 'pre-wrap', lineHeight: '1.7',
+                            color: 'var(--gray-800)', fontSize: 'var(--font-size-base)'
+                        }}>
+                            {noteModalJob.note}
+                        </div>
+
+                        <div className="flex justify-end mt-5">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => { handleEdit(noteModalJob); setShowNoteModal(false); setNoteModalJob(null); }}
+                            >
+                                <Pencil size={16} style={{ marginLeft: '6px' }} />
+                                تعديل الملاحظة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 @media print {
